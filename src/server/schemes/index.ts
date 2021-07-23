@@ -1,7 +1,7 @@
 import * as Joi from 'joi';
 
-export const outputOkSchema = (res: Joi.Schema): Joi.Schema => Joi.object({
-    ok: Joi.boolean().example(true),
+export const outputSchema = (ok: boolean, res: Joi.Schema): Joi.Schema => Joi.object({
+    ok: ok,
     result: res,
 });
 
@@ -27,14 +27,13 @@ export function validateUser(user){
     return userSchema.validate(user)
 }
 
-export const userSchema = Joi.object({
-    name: Joi.string(),
+export const  userSchema = Joi.object({
     email: Joi.string()
         .email()
         .required(),
     password: Joi.string()
         .min(6)
-        .required(),
+        .required().options({}),
 });
 
 

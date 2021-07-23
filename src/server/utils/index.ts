@@ -19,9 +19,9 @@ export function getRealIp(request): string {
     : request.info.remoteAddress;
 }
 
-export function output(res?: object | null): object {
+export function output(ok:boolean,res?: object | null): object {
   return {
-    ok: true,
+    ok: ok,
     result: res,
   };
 }
@@ -63,33 +63,33 @@ export function totpValidate(totp: string, secret: string): boolean {
 export function responseHandler(r, h) {
   // Handle default hapi errors (like not found, etc.)
   if (r.response.isBoom && r.response.data === null) {
-    r.response = h
-      .response({
-        ok: false,
-        code: Math.floor(r.response.output.statusCode * 1000),
-        data: {},
-        msg: r.response.message,
+      r.response = h.response({
+          ok: false,
+          code: Math.floor(r.response.output.payload.statusCode * 1000),
+          data: {},
+          msg: r.response.output.payload.message,
       })
       .code(r.response.output.statusCode);
-    return h.continue;
+      // console.log(1,r.response.request.payload.error.details[0].message);
+
+      return h.continue;
   }
 
   // Handle custom api error
   if (r.response.isBoom && r.response.data.api) {
-    r.response = h
-      .response({
-        ok: false,
-        code: r.response.data.code,
-        data: r.response.data.data,
-        msg: r.response.output.payload.message,
-      })
-      .code(Math.floor(r.response.data.code / 1000));
+      r.response = h.response({
+          ok: false,
+          code: r.response.data.code,
+          msg: r.response.output.payload.message,
+          data: r.response.data.data,
+      }).code(Math.floor(r.response.data.code / 1000));
+      // console.log(2,r.response);
     return h.continue;
   }
 
   // Handle non api errors with data
   if (r.response.isBoom && !r.response.data.api) {
-    r.response = h
+      r.response = h
       .response({
         ok: false,
         code: Math.floor(r.response.output.statusCode * 1000),
@@ -97,17 +97,18 @@ export function responseHandler(r, h) {
         msg: r.response.message,
       })
       .code(r.response.output.statusCode);
-    return h.continue;
-  }
+      // console.log(3,r.response);
 
-  return h.continue;
+      return h.continue;
+  }
+    return h.continue;
 }
 
 export async function handleValidationError(r, h, err) {
   return error(
     400000,
     'Validation error',
-    err.details.map((e) => ({ field: e.context.key, reason: e.type.replace('any.', ''), }))
+      err.details.map((e) => ({ field: e.context.key, reason: e.type.replace('any.', ''), }))
   );
 }
 

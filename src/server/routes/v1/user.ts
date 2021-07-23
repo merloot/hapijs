@@ -1,30 +1,31 @@
 import {getUsers, login, registration,} from '../../api/v1/user';
-import {outputOkSchema, outputPaginationSchema,} from "../../schemes";
-export default
-[
+import {outputSchema, outputPaginationSchema, userSchema, validateUser,} from "../../schemes";
+export default [
     {
-      method: 'POST',
+        method: 'POST',
         path: '/v1/user/registration',
-        handler: registration,
         options: {
-        id: 'v1.user.registration.post',
+            id: 'v1.user.registration.post',
             tags: ['api', 'v1', 'user'],
+            handler: registration,
             auth: false,
-            response:{
-          schema: outputOkSchema
-            },
+            validate:{ payload: validateUser},
+            response:{ schema: outputSchema },
         },
     },
     {
-      method: 'POST',
+        method: 'POST',
         path: '/v1/user/login',
         handler: login,
         options: {
-        id: 'v1.user.login.post',
+            id: 'v1.user.login.post',
             tags: ['api', 'v1', 'user'],
             auth: false,
             response:{
-          schema: outputOkSchema
+                schema: outputSchema
+            },
+            validate:{
+                payload: validateUser,
             },
         },
     },
