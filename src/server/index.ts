@@ -11,10 +11,10 @@ import * as Qs from 'qs';
 import routes from './routes';
 import config from './config/config';
 import { handleValidationError, responseHandler, } from './utils';
-import { tokenValidate, } from './utils/auth';
+import { tokenValidate,} from './utils/auth';
 import SwaggerOptions from './config/swagger';
 import { pinoConfig, } from './config/pino';
-import sequelize from "./models";
+
 
 const HapiSwagger = require('hapi-swagger');
 const Package = require('../../package.json');
@@ -66,7 +66,7 @@ const init = async () => {
   // Загружаем маршруты
   server.route(routes);
   // Error handler
-  // server.ext('onPreResponse', responseHandler);
+  server.ext('onPreResponse', responseHandler);
   await server.register({
     plugin: HapiPulse,
     options: {
@@ -82,7 +82,8 @@ const init = async () => {
   // Запускаем сервер
   try {
     await server.start();
-    server.log('info', `Server running at: ${server.info.uri}`);
+
+      server.log('info', `Server running at: ${server.info.uri}`);
   }
   catch (err) {
     server.log('error', JSON.stringify(err));

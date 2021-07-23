@@ -1,56 +1,47 @@
-import { getPagination, getPagingData, output } from '../../utils';
+import {error, output} from '../../utils';
 import {User} from "../../models/users/User";
-import { getUsersDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.registry.dto";
+import {userGetDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.dto";
 import sequelize from "../../models";
-import * as bcrypt from 'bcrypt';
-import {generateJwt} from "../../utils/auth";
-import {userSchema} from "../../schemes";
-
+import {createJWToken, generateJwt} from "../../utils/auth";
+import {exist} from "joi";
 
 const userRepository = sequelize.getRepository(User);
 
 
-export async function registration (request) {
-    if (request.payload.error){
-        return output(false,request.payload.error.details[0].message)
+export async function registration(request) {
+    try {
+        const  userData: userRegistryDto = request.payload;
+        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['email']});
+        if (user){
+            return error(400, 'email is exists',null)
+        }else {
+
+            return output(await userRepository.create({...userData}));
+        }
+    }catch (err){
+        return error(400, err, null);
     }
-    const userData: userRegistryDto = request.payload;
-    console.log(request.payload);
-    await userRepository.findOne({where:{email:userData.email}}).then(async function (user) {
-        if (user) {
-            return output(false, {error:'Email already registered.'});
-        } else {
-            const user = await userRepository.create({...userData});
-            return output(true, user);
-        }
-    });
 }
 
-export async function login(request): Promise<JsonWebKey | any> {
-    const userData: userLoginDto = request.payload;
-    await userRepository.findOne({where:{email:userData.email}}).then(async function (user){
-        if (!user){
-            return output(false, {error:'User not exists'})
-        } else if (await bcrypt.compareSync(userData.password, user.get('password'))){
-            //TODO Разобраться почему не генериться jwt token
-            const token = generateJwt(user);
-            return output(true,token)
-            // console.log(token);
-        } else {
-            return output(false,{error:"password is not valid"})
+export async function login(request) {
+    try {
+        let userData: userLoginDto = request.payload;
+        console.log();
+        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['id','email','password']});
+        if (user){
+            return await user.passwordCompare(userData.password) ?
+                output(generateJwt({id:user.id, id_role: '23'})) :
+                error(400, 'password is not valid', user)
         }
-     });
+    }catch (err){
+        return error(400, err,null)
+    }
 }
 
-export async function getUsers(request){
-    const userData: getUsersDto = request.payload;
-
-    const {limit, offset} = getPagination(userData.page, userData.pageSize);
-    const users = await userRepository.findAndCountAll({
-        limit: userData.pageSize,
-        offset: userData.page
-    }).then(data => {
-        const response = getPagingData(data, userData.page, userData.pageSize);
-        return ;
-    });
+export function getUsers(request) {
+    console.log(request);
+    let userData: userGetDto = request.payload;
+    return userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset})
+        .then((users) => output(users))
+        .catch(err => output(err))
 }

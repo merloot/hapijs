@@ -8,7 +8,7 @@ export class userLoginDto{
     readonly password:string;
 }
 
-export class getUsersDto{
-    readonly page:number;
-    readonly pageSize:number;
+export class userGetDto{
+    readonly limit:number;
+    readonly offset: number;
 }

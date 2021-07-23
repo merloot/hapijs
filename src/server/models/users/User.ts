@@ -18,7 +18,12 @@ import { getUUID, } from '../../utils/index';
 // }))
 @Table
 export class User extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), }) id: string;
+
+  @Column({
+      primaryKey: true,
+      type: DataType.STRING,
+      defaultValue: () => getUUID(),
+  })id: string;
 
   @IsEmail
   @Column({

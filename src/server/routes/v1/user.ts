@@ -1,5 +1,5 @@
 import {getUsers, login, registration,} from '../../api/v1/user';
-import {outputSchema, outputPaginationSchema, userSchema, validateUser,} from "../../schemes";
+import {outputPaginationSchema, outputSchema, userSchema, validateUser,} from "../../schemes";
 export default [
     {
         method: 'POST',
@@ -9,7 +9,7 @@ export default [
             tags: ['api', 'v1', 'user'],
             handler: registration,
             auth: false,
-            validate:{ payload: validateUser},
+            validate:{ payload: userSchema},
             response:{ schema: outputSchema },
         },
     },
@@ -24,21 +24,17 @@ export default [
             response:{
                 schema: outputSchema
             },
-            validate:{
-                payload: validateUser,
-            },
+            validate:{ payload: userSchema },
         },
     },
     {
         method: 'GET',
         path: '/v1/users',
         handler: getUsers,
-        options:{
-            id: 'v1.users',
-            tags: ['api','v1','user'],
-            response:{
-                schema: outputPaginationSchema
-            },
+        options: {
+            id: 'v1.users.get',
+            tags: ['api', 'v1', 'user'],
+            response:{schema: outputPaginationSchema },
         },
     },
 ];

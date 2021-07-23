@@ -3,6 +3,8 @@ import { Boom, } from '@hapi/boom';
 import * as FileType from 'file-type';
 import * as speakeasy from 'speakeasy';
 import config from '../config/config';
+import sequelize from "../models";
+import {UniqueConstraintError} from 'sequelize'
 
 interface IFileWithExt {
   data: Buffer;
@@ -19,26 +21,13 @@ export function getRealIp(request): string {
     : request.info.remoteAddress;
 }
 
-export function output(ok:boolean,res?: object | null): object {
+export function output(res?: object | null): object {
   return {
-    ok: ok,
+    ok: true,
     result: res,
   };
 }
-export  const getPagingData = (data, page, limit) => {
-    const { count: totalItems, rows: tutorials } = data;
-    const currentPage = page ? +page : 0;
-    const totalPages = Math.ceil(totalItems / limit);
 
-    return { totalItems, tutorials, totalPages, currentPage };
-};
-
-export const getPagination = (page, size) => {
-    const limit = size ? +size : 3;
-    const offset = page ? page * limit : 0;
-
-    return { limit, offset };
-};
 
 
 export function error(code: number, msg: string, data: object): Boom {
@@ -61,47 +50,15 @@ export function totpValidate(totp: string, secret: string): boolean {
 }
 
 export function responseHandler(r, h) {
-  // Handle default hapi errors (like not found, etc.)
-  if (r.response.isBoom && r.response.data === null) {
-      r.response = h.response({
-          ok: false,
-          code: Math.floor(r.response.output.payload.statusCode * 1000),
-          data: {},
-          msg: r.response.output.payload.message,
-      })
-      .code(r.response.output.statusCode);
-      // console.log(1,r.response.request.payload.error.details[0].message);
-
-      return h.continue;
-  }
-
-  // Handle custom api error
-  if (r.response.isBoom && r.response.data.api) {
-      r.response = h.response({
-          ok: false,
-          code: r.response.data.code,
-          msg: r.response.output.payload.message,
-          data: r.response.data.data,
-      }).code(Math.floor(r.response.data.code / 1000));
-      // console.log(2,r.response);
-    return h.continue;
-  }
-
-  // Handle non api errors with data
-  if (r.response.isBoom && !r.response.data.api) {
-      r.response = h
-      .response({
-        ok: false,
-        code: Math.floor(r.response.output.statusCode * 1000),
-        data: r.response.data,
-        msg: r.response.message,
-      })
-      .code(r.response.output.statusCode);
-      // console.log(3,r.response);
-
-      return h.continue;
-  }
-    return h.continue;
+    let response = r.response;
+    // isServer indicates status code >= 500
+    //  if error, pass it through server.log
+    if (response && response.isBoom && response.isServer) {
+      console.log(response)
+        const error = response.error || response.message;
+        console.log([ 'error' ], error);
+    }
+    return h.continue
 }
 
 export async function handleValidationError(r, h, err) {
