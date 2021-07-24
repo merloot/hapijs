@@ -23,6 +23,10 @@ export function getRealIp(request): string {
     : request.info.remoteAddress;
 }
 
+export function getUserAgent(request):string{
+    return request.headers['user-agent']
+}
+
 export function output(res?: object | null): object {
   return {
     ok: true,
@@ -69,7 +73,7 @@ export function responseHandler(r, h) {
     // isServer indicates status code >= 500
     //  if error, pass it through server.log
     if (response && response.isBoom && response.isServer) {
-      console.log(response)
+      console.log(response);
         const error = response.error || response.message;
         console.log([ 'error' ], error);
     }

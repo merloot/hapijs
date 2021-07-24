@@ -5,8 +5,6 @@ import * as bcrypt from 'bcrypt';
 import { getUUID, } from '../../utils';
 import {Role} from "./Roles";
 import {date, string} from "joi";
-import {DATE} from "sequelize";
-import sequelize from "../index";
 
 @Table
 export class User extends Model {

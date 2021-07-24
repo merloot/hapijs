@@ -4,6 +4,7 @@ import { error, } from './index';
 import { User, } from '../models/users/User';
 import { Session, } from '../models/users/Session';
 import { Errors, } from './errors';
+import sequelize from "../models";
 
 export const generateJwt = (data: object) => {
   const access = jwt.sign(data, config.auth.jwt.access.secret, { algorithm:'HS256', expiresIn: config.auth.jwt.access.lifetime, });
@@ -23,21 +24,30 @@ export const decodeJwt = async (token: string, secret: string) => {
   }
 };
 
+export const destroyJwt = async (token: string, secret: string) => {
+    try {
+        return await jwt.destroy(token, secret);
+    }
+    catch (e) {
+        const code = e.name === 'TokenExpiredError' ? Errors.TokenExpired : Errors.TokenInvalid;
+        const msg = e.name === 'TokenExpiredError' ? 'Token expired' : 'Token invalid';
+        throw error(code, msg, {});
+    }
+};
+
 export type validateFunc = (r, token: string) => Promise<any>;
 
 // Fabric which returns token validate function depending on token type
 export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
   return async function (r, token: string) {
-    const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+    let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+      let sessionRepository = sequelize.getRepository(Session);
 
-    const { user, } = await Session.findByPk(data.id, {
-      include: [{ model: User, }],
-    });
+      const user = await sessionRepository.findOne({where:{user_id: data.id},include:[sequelize.getRepository(User)]});
+      if (user) {
+          return { isValid: true, credentials: user, artifacts: { token, type: tokenType, }, };
+      }
 
-    if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: tokenType, }, };
-    }
-
-    throw error(Errors.SessionNotFound, 'User not found', {});
+      throw error(Errors.SessionNotFound, 'User not found', {});
   };
 }

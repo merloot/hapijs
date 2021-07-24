@@ -66,7 +66,7 @@ const init = async () => {
   // Загружаем маршруты
   server.route(routes);
   // Error handler
-  // server.ext('onPreResponse', responseHandler);
+  server.ext('onPreResponse', responseHandler);
   await server.register({
     plugin: HapiPulse,
     options: {
