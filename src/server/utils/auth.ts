@@ -4,7 +4,6 @@ import { error, } from './index';
 import { User, } from '../models/users/User';
 import { Session, } from '../models/users/Session';
 import { Errors, } from './errors';
-import _ from 'lodash'
 
 export const generateJwt = (data: object) => {
   const access = jwt.sign(data, config.auth.jwt.access.secret, { algorithm:'HS256', expiresIn: config.auth.jwt.access.lifetime, });
@@ -42,17 +41,3 @@ export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
     throw error(Errors.SessionNotFound, 'User not found', {});
   };
 }
-
-export function createJWToken(details) {
-    if (typeof details !== 'object') {
-        details = {}
-    }
-
-    return jwt.sign({
-        data: details
-    }, config.auth.jwt.access.secret, {
-        expiresIn: config.auth.jwt.access.lifetime,
-        algorithm: 'HS256'
-    })
-}
-

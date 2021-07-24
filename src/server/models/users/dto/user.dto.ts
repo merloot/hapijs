@@ -12,3 +12,8 @@ export class userGetDto{
     readonly limit:number;
     readonly offset: number;
 }
+
+export class userUpdateRoleDto{
+    readonly email:string;
+    readonly id_role: string;
+}

@@ -5,6 +5,8 @@ import * as speakeasy from 'speakeasy';
 import config from '../config/config';
 import sequelize from "../models";
 import {UniqueConstraintError} from 'sequelize'
+import * as Joi from "joi";
+import {object} from "joi";
 
 interface IFileWithExt {
   data: Buffer;
@@ -28,6 +30,19 @@ export function output(res?: object | null): object {
   };
 }
 
+export function outputPagination(title: string,count: number, item: object){
+    return {
+        ok: true,
+        result: {
+            count: count,
+            [title]: item,
+        },
+    };
+}
+
+export function errors(code: number, msg:string, data= null) {
+    return { code, msg, data }
+}
 
 
 export function error(code: number, msg: string, data: object): Boom {

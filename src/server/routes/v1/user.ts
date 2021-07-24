@@ -1,5 +1,5 @@
 import {getUsers, login, registration,} from '../../api/v1/user';
-import {outputPaginationSchema, outputSchema, userSchema, validateUser,} from "../../schemes";
+import {getUsersSchema, outputPaginationSchema, outputSchema, userSchema, validateUser,} from "../../schemes";
 export default [
     {
         method: 'POST',
@@ -34,7 +34,8 @@ export default [
         options: {
             id: 'v1.users.get',
             tags: ['api', 'v1', 'user'],
-            response:{schema: outputPaginationSchema },
+            response:{ schema: outputPaginationSchema },
+            validate:{ query: getUsersSchema }
         },
     },
 ];

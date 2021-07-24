@@ -36,4 +36,8 @@ export const  userSchema = Joi.object({
         .required().options({}),
 });
 
+export const getUsersSchema = Joi.object({
+    limit: Joi.number(),
+    offset: Joi.number(),
+});
 
