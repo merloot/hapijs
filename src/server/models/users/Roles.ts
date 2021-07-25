@@ -1,8 +1,6 @@
-import {
-    Column, DataType, Model, Table, HasMany,
-} from 'sequelize-typescript';
 import {User} from "./User";
 import {getUUID} from "../../utils";
+import { Column, DataType, Model, Table, HasMany } from 'sequelize-typescript';
 
 @Table
 export class Role extends Model {

@@ -1,14 +1,10 @@
-import { errors, getRealIp, getUserAgent, output, outputPagination} from '../../utils';
-import {User} from "../../models/users/User";
-import {Session} from "../../models/users/Session";
-import {userGetDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.dto";
-import sequelize from "../../models";
-import { destroyJwt, generateJwt} from "../../utils/auth";
 import {exist} from "joi";
 import config from "../../config/config";
+import { destroyJwt, generateJwt} from "../../utils/auth";
+import {sessionRepository, userRepository} from "../../utils/repositories";
+import { errors, getRealIp, getUserAgent, output, outputPagination} from '../../utils';
+import {userGetDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.dto";
 
-
-const userRepository = sequelize.getRepository(User);
 
 
 export async function registration(request) {
@@ -18,7 +14,6 @@ export async function registration(request) {
         if (user){
             return errors(400, 'email already exists',user)
         }else {
-
             return output(await userRepository.create({...userData}));
         }
     }catch (err){
@@ -43,6 +38,18 @@ export async function login(request) {
     }
 }
 
+
+export async function getUsers(request){
+    try {
+        let userData: userGetDto = request.query;
+        let users = await userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset});
+        return outputPagination('users',users.count,users.rows);
+
+    }catch (err){
+        return errors(400, err)
+    }
+}
+
 export async function logout(request){
     try {
         let token = request.auth.artifacts.token;
@@ -54,34 +61,16 @@ export async function logout(request){
 }
 
 export async function refresh(request){
-    let token = request.payload.refresh;
-    let type = 'refresh';
-
-    request.headers['authorization']= 'Bearer ' + token.refresh;
-    console.log(request);
-    // let data = await decodeJwt(token, config.auth.jwt.refresh.secret);
-    let sessionRepository = sequelize.getRepository(Session);
-    console.log(1);
-    let user = await sessionRepository.findOne({where:{token: token}});
+    let refresh = request.auth.artifacts.token;
+    let user = await sessionRepository.findOne({where:{token: refresh}});
     if (user){
-        await destroyJwt(request.payload.refresh, config.auth.jwt.refresh.secret);
-        let token = generateJwt({id:user.id});
-        await setSession(request,user.id, token.refresh);
+        let token = await generateJwt({id:user.user_id});
+        await setSession(request,user.user_id, token.refresh);
         return output(token);
     }
     return errors(400, 'user not found')
 }
 
-// export async function refresh(request){
-//     try {
-
-        // console.log(await refreshToken(token,type));
-        // return output(await refreshToken(token,type));
-        // return jwt.sign(data, config.auth.jwt.access.secret, { algorithm:'HS256', expiresIn: config.auth.jwt.access.lifetime, });
-    // }catch (err){
-    //     return errors(400, err)
-    // }
-// }
 
 async function setSession(request, user_id:string,  token:string){
     try {
@@ -91,8 +80,6 @@ async function setSession(request, user_id:string,  token:string){
           ip:getRealIp(request),
           user_agent: getUserAgent(request)};
 
-        let sessionRepository = sequelize.getRepository(Session);
-
         let session = await sessionRepository.findOne({where:{user_id:sessionData.user_id}});
         if (session){
             await sessionRepository.update({...sessionData},{where:{user_id:sessionData.user_id}})
@@ -101,23 +88,7 @@ async function setSession(request, user_id:string,  token:string){
         }
 
     } catch (err){
-        return err;
+        return errors(400,err);
     }
 }
 
-export async function getUsers(request){
-    try {
-        console.log(request);
-        let userData: userGetDto = request.query;
-        let users = await userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset});
-        console.log(users);
-
-        return outputPagination('users',users.count,users.rows);
-
-    }catch (err){
-        return errors(400, err)
-    }
-    // return userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset})
-    //     .then((users) => output(users))
-    //     .catch(err => output(err))
-}

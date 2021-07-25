@@ -1,8 +1,6 @@
-import {
-    BelongsTo, Column, DataType, ForeignKey, IsUUID, Length, Model, Table,
-} from 'sequelize-typescript';
-import { getUUID, } from '../../utils';
 import { User, } from './User';
+import { getUUID, } from '../../utils';
+import { BelongsTo, Column, DataType, ForeignKey, Length, Model, Table } from 'sequelize-typescript';
 
 @Table
 export class Session extends Model {

@@ -1,19 +1,19 @@
-import * as Hapi from '@hapi/hapi';
-import * as Nes from '@hapi/nes';
-import * as Inert from '@hapi/inert';
-import * as Vision from '@hapi/vision';
-import * as Pino from 'hapi-pino';
-import * as Basic from '@hapi/basic';
-import * as HapiCors from 'hapi-cors';
-import * as HapiBearer from 'hapi-auth-bearer-token';
-import * as HapiPulse from 'hapi-pulse';
 import * as Qs from 'qs';
 import routes from './routes';
+import * as Nes from '@hapi/nes';
+import * as Pino from 'hapi-pino';
+import * as Hapi from '@hapi/hapi';
+import * as Inert from '@hapi/inert';
 import config from './config/config';
-import { handleValidationError, responseHandler, } from './utils';
+import * as Basic from '@hapi/basic';
+import * as Vision from '@hapi/vision';
+import * as HapiCors from 'hapi-cors';
+import * as HapiPulse from 'hapi-pulse';
+import { pinoConfig, } from './config/pino';
 import { tokenValidate,} from './utils/auth';
 import SwaggerOptions from './config/swagger';
-import { pinoConfig, } from './config/pino';
+import * as HapiBearer from 'hapi-auth-bearer-token';
+import { handleValidationError, responseHandler, } from './utils';
 
 
 const HapiSwagger = require('hapi-swagger');
@@ -53,7 +53,6 @@ const init = async () => {
     { plugin: HapiSwagger, options: SwaggerOptions, }
   ]);
 
-  // sequelize;
   // JWT Auth
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access'),
@@ -82,13 +81,11 @@ const init = async () => {
   // Запускаем сервер
   try {
     await server.start();
-
       server.log('info', `Server running at: ${server.info.uri}`);
   }
   catch (err) {
     server.log('error', JSON.stringify(err));
   }
-
   return server;
 };
 

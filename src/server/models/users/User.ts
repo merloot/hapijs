@@ -1,10 +1,8 @@
-import {
-    Column, DataType, Model, Table, IsEmail, ForeignKey, BelongsTo,
-} from 'sequelize-typescript';
-import * as bcrypt from 'bcrypt';
-import { getUUID, } from '../../utils';
 import {Role} from "./Roles";
 import {date, string} from "joi";
+import * as bcrypt from 'bcrypt';
+import { getUUID, } from '../../utils';
+import { Column, DataType, Model, Table, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
 
 @Table
 export class User extends Model {

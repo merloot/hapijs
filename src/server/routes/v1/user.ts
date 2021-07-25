@@ -1,5 +1,6 @@
 import {getUsers, login, logout, refresh, registration,} from '../../api/v1/user';
 import {getUsersSchema, outputPaginationSchema, outputSchema, userSchema,} from "../../schemes";
+
 export default [
     {
         method: 'POST',
@@ -57,6 +58,7 @@ export default [
         options: {
             id: 'v1.user.refresh.post',
             tags: ['api', 'v1', 'user'],
+            auth: 'jwt-refresh',
             response:{
                 schema: outputSchema
             },

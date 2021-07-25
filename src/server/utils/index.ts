@@ -1,12 +1,9 @@
-import { v4 as uuidv4, } from 'uuid';
-import { Boom, } from '@hapi/boom';
-import * as FileType from 'file-type';
-import * as speakeasy from 'speakeasy';
-import config from '../config/config';
-import sequelize from "../models";
-import {UniqueConstraintError} from 'sequelize'
-import * as Joi from "joi";
 import {object} from "joi";
+import { Boom, } from '@hapi/boom';
+import { v4 as uuidv4, } from 'uuid';
+import * as FileType from 'file-type';
+import config from '../config/config';
+import * as speakeasy from 'speakeasy';
 
 interface IFileWithExt {
   data: Buffer;

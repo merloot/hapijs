@@ -1,10 +1,8 @@
+import { error, } from './index';
+import { Errors, } from './errors';
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
-import { error, } from './index';
-import { User, } from '../models/users/User';
-import { Session, } from '../models/users/Session';
-import { Errors, } from './errors';
-import sequelize from "../models";
+import {sessionRepository, userRepository} from "./repositories";
 
 export const generateJwt = (data: object) => {
   const access = jwt.sign(data, config.auth.jwt.access.secret, { algorithm:'HS256', expiresIn: config.auth.jwt.access.lifetime, });
@@ -41,9 +39,7 @@ export type validateFunc = (r, token: string) => Promise<any>;
 export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
   return async function (r, token: string) {
     let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
-      let sessionRepository = sequelize.getRepository(Session);
-
-      const user = await sessionRepository.findOne({where:{user_id: data.id},include:[sequelize.getRepository(User)]});
+      const user = await sessionRepository.findOne({where:{user_id: data.id},include:[userRepository]});
       if (user) {
           return { isValid: true, credentials: user, artifacts: { token, type: tokenType, }, };
       }
