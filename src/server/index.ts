@@ -13,7 +13,7 @@ import { pinoConfig, } from './config/pino';
 import { tokenValidate,} from './utils/auth';
 import SwaggerOptions from './config/swagger';
 import * as HapiBearer from 'hapi-auth-bearer-token';
-import { handleValidationError, responseHandler, } from './utils';
+import { responseHandler } from './utils';
 
 
 const HapiSwagger = require('hapi-swagger');
@@ -34,10 +34,11 @@ const init = async () => {
           // Handle all validation errors
           abortEarly: false,
         },
-        failAction: handleValidationError,
-      },
-      response: {
-        failAction: 'log',
+        failAction:  async (request, h, err) => {
+          let er = err.details.map((e)=>(e.message));
+            console.log(err.details.map((e)=>(e.message)));
+            return h.response({code:400,message:'Validation error',er}).takeover();
+        }
       },
     },
   });

@@ -1,20 +1,20 @@
 import {exist} from "joi";
 import config from "../../config/config";
 import { destroyJwt, generateJwt} from "../../utils/auth";
-import {sessionRepository, userRepository} from "../../utils/repositories";
+import {SessionRepository, UserRepository} from "../../utils/repositories";
 import { errors, getRealIp, getUserAgent, output, outputPagination} from '../../utils';
-import {userGetDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.dto";
+import {userRegistryDto, userGetDto, userLoginDto,} from "../../models/users/dto/user.dto";
 
 
 
-export async function registration(request) {
+export async function registration(request ) {
     try {
         const  userData: userRegistryDto = request.payload;
-        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['email']});
+        let user = await UserRepository.findUserByEmail(userData.email);
         if (user){
-            return errors(400, 'email already exists',user)
+            return errors(400, 'email already exists',null)
         }else {
-            return output(await userRepository.create({...userData}));
+            return output(await UserRepository.create({...userData}));
         }
     }catch (err){
         return errors(400, err, null);
@@ -24,7 +24,7 @@ export async function registration(request) {
 export async function login(request) {
     try {
         let userData: userLoginDto = request.payload;
-        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['id','email','password']});
+        let user = await UserRepository.findUserByEmail(userData.email);
         if (user){
             if (await user.passwordCompare(userData.password)) {
                 let token = generateJwt({id:user.id});
@@ -37,13 +37,11 @@ export async function login(request) {
         return errors(400, err)
     }
 }
-
-
 export async function getUsers(request){
     try {
         let userData: userGetDto = request.query;
-        let users = await userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset});
-        return outputPagination('users',users.count,users.rows);
+        let users = await UserRepository.getUsers(userData.limit,userData.offset);
+        return outputPagination(UserRepository.getClassName(),users);
 
     }catch (err){
         return errors(400, err)
@@ -59,10 +57,10 @@ export async function logout(request){
         return errors(400, err)
     }
 }
-
+//
 export async function refresh(request){
     let refresh = request.auth.artifacts.token;
-    let user = await sessionRepository.findOne({where:{token: refresh}});
+    let user = await SessionRepository.findSessionByRefreshToken(refresh);
     if (user){
         let token = await generateJwt({id:user.user_id});
         await setSession(request,user.user_id, token.refresh);
@@ -80,11 +78,11 @@ async function setSession(request, user_id:string,  token:string){
           ip:getRealIp(request),
           user_agent: getUserAgent(request)};
 
-        let session = await sessionRepository.findOne({where:{user_id:sessionData.user_id}});
+        let session = await SessionRepository.findUserById(sessionData.user_id);
         if (session){
-            await sessionRepository.update({...sessionData},{where:{user_id:sessionData.user_id}})
+            await SessionRepository.update({...sessionData},{where:{user_id:sessionData.user_id}})
         }else {
-            await sessionRepository.create({...sessionData})
+            await SessionRepository.create({...sessionData})
         }
 
     } catch (err){

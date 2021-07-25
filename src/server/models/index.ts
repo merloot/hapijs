@@ -8,7 +8,6 @@ import {roleRepository} from "../utils/repositories";
 const sequelize = new Sequelize(config.dbLink, {
     dialect: 'postgres',
     models: [User, Session,Role],
-    repositoryMode: true,
 });
 
 sequelize.sync();

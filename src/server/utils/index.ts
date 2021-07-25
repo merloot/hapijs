@@ -31,17 +31,16 @@ export function output(res?: object | null): object {
   };
 }
 
-export function outputPagination(title: string,count: number, item: object){
+export function outputPagination(title: string, item){
     return {
         ok: true,
         result: {
-            count: count,
             [title]: item,
         },
     };
 }
 
-export function errors(code: number, msg:string, data= null) {
+export function errors(code: number, msg:string, data?: object) {
     return { code, msg, data }
 }
 
@@ -66,19 +65,18 @@ export function totpValidate(totp: string, secret: string): boolean {
 }
 
 export function responseHandler(r, h) {
-    let response = r.response;
-    // isServer indicates status code >= 500
-    //  if error, pass it through server.log
-    if (response && response.isBoom && response.isServer) {
-      console.log(response);
-        const error = response.error || response.message;
-        console.log([ 'error' ], error);
-    }
+    // // isServer indicates status code >= 500
+    // //  if error, pass it through server.log
+    // if (response && response.isBoom && response.isServer) {
+    //   console.log(response);
+    //     const error = response.error || response.message;
+    //     console.log([ 'error' ], error);
+    // }
     return h.continue
 }
 
 export async function handleValidationError(r, h, err) {
-  return error(
+  return await error(
     400000,
     'Validation error',
       err.details.map((e) => ({ field: e.context.key, reason: e.type.replace('any.', ''), }))
