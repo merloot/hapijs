@@ -8,6 +8,10 @@ export abstract class baseRepository <T> implements IBaseRepository<T>{
         this.model = model;
     }
 
+    bulkCreate(array: object): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
 
     public getClassName(){
         return this.model.name;

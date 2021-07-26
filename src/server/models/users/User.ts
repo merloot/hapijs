@@ -3,6 +3,7 @@ import {date, string} from "joi";
 import * as bcrypt from 'bcrypt';
 import { getUUID, } from '../../utils';
 import { Column, DataType, Model, Table, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import {RoleRepository} from "../../utils/repositories";
 
 @Table
 export class User extends Model {
@@ -38,12 +39,14 @@ export class User extends Model {
   @ForeignKey(() => Role)
 
   // async defaultRole (){
-  //     return Role.findOne({where:{role:'buyer'}});
+  //     return await RoleRepository.findIdForBuyerRole();
   // }
 
   @Column({
       type: DataType.STRING,
-      // defaultValue:  await defaultRole.id
+      // defaultValue: async () => {
+      //     await RoleRepository.findIdForBuyerRole();
+      // },
   })id_role: string;
 
   @BelongsTo(() => Role)

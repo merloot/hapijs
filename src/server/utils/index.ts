@@ -65,13 +65,13 @@ export function totpValidate(totp: string, secret: string): boolean {
 }
 
 export function responseHandler(r, h) {
-    // // isServer indicates status code >= 500
-    // //  if error, pass it through server.log
-    // if (response && response.isBoom && response.isServer) {
-    //   console.log(response);
-    //     const error = response.error || response.message;
-    //     console.log([ 'error' ], error);
-    // }
+    let response = r.response;
+    // isServer indicates status code >= 500
+    //  if error, pass it through server.log
+    if (response && response.isBoom && response.isServer) {
+        const error = response.error || response.message;
+        console.log([ 'error' ], error);
+    }
     return h.continue
 }
 

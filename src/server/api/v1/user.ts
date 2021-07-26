@@ -1,7 +1,7 @@
 import {exist} from "joi";
 import config from "../../config/config";
 import { destroyJwt, generateJwt} from "../../utils/auth";
-import {SessionRepository, UserRepository} from "../../utils/repositories";
+import {RoleRepository, SessionRepository, UserRepository} from "../../utils/repositories";
 import { errors, getRealIp, getUserAgent, output, outputPagination} from '../../utils';
 import {userRegistryDto, userGetDto, userLoginDto,} from "../../models/users/dto/user.dto";
 
@@ -9,7 +9,8 @@ import {userRegistryDto, userGetDto, userLoginDto,} from "../../models/users/dto
 
 export async function registration(request ) {
     try {
-        const  userData: userRegistryDto = request.payload;
+        let bueyr = await RoleRepository.findIdForBuyerRole();
+        const  userData: userRegistryDto = {...request.payload, id_role:bueyr.id};
         let user = await UserRepository.findUserByEmail(userData.email);
         if (user){
             return errors(400, 'email already exists',null)

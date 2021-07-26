@@ -22,9 +22,7 @@ export default [
             id: 'v1.user.login.post',
             tags: ['api', 'v1', 'user'],
             auth: false,
-            response:{
-                schema: outputSchema
-            },
+            response:{ schema: outputSchema},
             validate:{ payload: userSchema },
         },
     },

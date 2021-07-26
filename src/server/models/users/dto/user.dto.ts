@@ -1,6 +1,8 @@
+
 export class userRegistryDto{
     readonly email:string;
     readonly password:string;
+    readonly id_role:string;
 }
 
 export class userLoginDto{
