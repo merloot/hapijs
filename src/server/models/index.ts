@@ -14,15 +14,6 @@ sequelize.authenticate()
     .then(() => {
     console.log('Sequelize has established postgre connection successfully.');
     })
-    // .then(()=>{
-    //     Role.bulkCreate([
-    //         {role:'banned'},
-    //         {role:'buyer'},
-    //         {role:'develop_project'},
-    //         {role:'admin'},
-    //         {role:'super_admin'},
-    //     ]).catch((err) => console.log(err));
-    // })
     .catch(err => {
         console.log('Sequelize was unable to connect to the database:', err);
     });
