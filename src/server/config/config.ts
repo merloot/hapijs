@@ -4,6 +4,10 @@ config();
 
 export default {
   dbLink: process.env.DB_LINK,
+    mailer:{
+    user:process.env.NODEMAILER_USER,
+    pass:process.env.NODEMAILER_PASS,
+    },
   auth: {
     jwt: {
       access: {

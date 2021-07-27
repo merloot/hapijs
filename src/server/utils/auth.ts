@@ -1,10 +1,8 @@
+import { error, } from './index';
+import { Errors, } from './errors';
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
-import { error, } from './index';
-import { User, } from '../models/users/User';
-import { Session, } from '../models/users/Session';
-import { Errors, } from './errors';
-import _ from 'lodash'
+import {SessionRepository} from "./repositories";
 
 export const generateJwt = (data: object) => {
   const access = jwt.sign(data, config.auth.jwt.access.secret, { algorithm:'HS256', expiresIn: config.auth.jwt.access.lifetime, });
@@ -24,35 +22,28 @@ export const decodeJwt = async (token: string, secret: string) => {
   }
 };
 
+export const destroyJwt = async (token: string, secret: string) => {
+    try {
+        return await jwt.destroy(token, secret);
+    }
+    catch (e) {
+        const code = e.name === 'TokenExpiredError' ? Errors.TokenExpired : Errors.TokenInvalid;
+        const msg = e.name === 'TokenExpiredError' ? 'Token expired' : 'Token invalid';
+        throw error(code, msg, {});
+    }
+};
+
 export type validateFunc = (r, token: string) => Promise<any>;
 
 // Fabric which returns token validate function depending on token type
 export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
   return async function (r, token: string) {
-    const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+    let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+    const user = await SessionRepository.findUserById(data.id);
+      if (user) {
+          return { isValid: true, credentials: user, artifacts: { token, type: tokenType, }, };
+      }
 
-    const { user, } = await Session.findByPk(data.id, {
-      include: [{ model: User, }],
-    });
-
-    if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: tokenType, }, };
-    }
-
-    throw error(Errors.SessionNotFound, 'User not found', {});
+      throw error(Errors.SessionNotFound, 'User not found', {});
   };
 }
-
-export function createJWToken(details) {
-    if (typeof details !== 'object') {
-        details = {}
-    }
-
-    return jwt.sign({
-        data: details
-    }, config.auth.jwt.access.secret, {
-        expiresIn: config.auth.jwt.access.lifetime,
-        algorithm: 'HS256'
-    })
-}
-

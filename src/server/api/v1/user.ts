@@ -1,47 +1,93 @@
-import {error, output} from '../../utils';
-import {User} from "../../models/users/User";
-import {userGetDto, userLoginDto, userRegistryDto} from "../../models/users/dto/user.dto";
-import sequelize from "../../models";
-import {createJWToken, generateJwt} from "../../utils/auth";
 import {exist} from "joi";
+import config from "../../config/config";
+import { destroyJwt, generateJwt} from "../../utils/auth";
+import {RoleRepository, SessionRepository, UserRepository} from "../../utils/repositories";
+import { errors, getRealIp, getUserAgent, output, outputPagination} from '../../utils';
+import {userRegistryDto, userGetDto, userLoginDto,} from "../../models/users/dto/user.dto";
 
-const userRepository = sequelize.getRepository(User);
 
 
-export async function registration(request) {
+export async function registration(request ) {
     try {
-        const  userData: userRegistryDto = request.payload;
-        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['email']});
+        let bueyr = await RoleRepository.findIdForBuyerRole();
+        const  userData: userRegistryDto = {...request.payload, id_role:bueyr.id};
+        let user = await UserRepository.findUserByEmail(userData.email);
         if (user){
-            return error(400, 'email is exists',null)
+            return errors(400, 'email already exists',null)
         }else {
-
-            return output(await userRepository.create({...userData}));
+            return output(await UserRepository.create({...userData}));
         }
     }catch (err){
-        return error(400, err, null);
+        return errors(400, err, null);
     }
 }
 
 export async function login(request) {
     try {
         let userData: userLoginDto = request.payload;
-        console.log();
-        let user = await userRepository.findOne({where:{email:userData.email}, attributes:['id','email','password']});
+        let user = await UserRepository.findUserByEmail(userData.email);
         if (user){
-            return await user.passwordCompare(userData.password) ?
-                output(generateJwt({id:user.id, id_role: '23'})) :
-                error(400, 'password is not valid', user)
+            if (await user.passwordCompare(userData.password)) {
+                let token = generateJwt({id:user.id});
+                await setSession(request,user.id, token.refresh);
+                return output(token);
+            }
+            return errors(400, 'password invalid')
         }
     }catch (err){
-        return error(400, err,null)
+        return errors(400, err)
+    }
+}
+export async function getUsers(request){
+    try {
+        let userData: userGetDto = request.query;
+        let users = await UserRepository.getUsers(userData.limit,userData.offset);
+        return outputPagination(UserRepository.getClassName(),users);
+
+    }catch (err){
+        return errors(400, err)
     }
 }
 
-export function getUsers(request) {
-    console.log(request);
-    let userData: userGetDto = request.payload;
-    return userRepository.findAndCountAll({limit: userData.limit, offset:userData.offset})
-        .then((users) => output(users))
-        .catch(err => output(err))
+export async function logout(request){
+    try {
+        let token = request.auth.artifacts.token;
+        let type = request.auth.artifacts.type;
+        return destroyJwt(token,config.auth.jwt[type].secret )
+    }catch (err){
+        return errors(400, err)
+    }
 }
+//
+export async function refresh(request){
+    let refresh = request.auth.artifacts.token;
+    let user = await SessionRepository.findSessionByRefreshToken(refresh);
+    if (user){
+        let token = await generateJwt({id:user.user_id});
+        await setSession(request,user.user_id, token.refresh);
+        return output(token);
+    }
+    return errors(400, 'user not found')
+}
+
+
+async function setSession(request, user_id:string,  token:string){
+    try {
+        let sessionData = {
+          token: token,
+          user_id: user_id,
+          ip:getRealIp(request),
+          user_agent: getUserAgent(request)};
+
+        let session = await SessionRepository.findUserById(sessionData.user_id);
+        if (session){
+            await SessionRepository.update({...sessionData},{where:{user_id:sessionData.user_id}})
+        }else {
+            await SessionRepository.create({...sessionData})
+        }
+
+    } catch (err){
+        return errors(400,err);
+    }
+}
+

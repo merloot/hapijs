@@ -1,21 +1,10 @@
-import {
-    Column, DataType, Model, Scopes, Table, HasOne, IsEmail,
-} from 'sequelize-typescript';
+import {Role} from "./Roles";
+import {date, string} from "joi";
 import * as bcrypt from 'bcrypt';
-import { getUUID, } from '../../utils/index';
+import { getUUID, } from '../../utils';
+import { Column, DataType, Model, Table, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import {RoleRepository} from "../../utils/repositories";
 
-// @Scopes(() => ({
-//   defaultScope: {
-//     attributes: {
-//       exclude: ['password'],
-//     },
-//   },
-//   withPassword: {
-//     attributes: {
-//       include: ['password'],
-//     },
-//   },
-// }))
 @Table
 export class User extends Model {
 
@@ -47,12 +36,32 @@ export class User extends Model {
   })
   password: string;
 
-  async passwordCompare(pwd: string) {
-    return bcrypt.compareSync(pwd, this.password);
-  }
+  @ForeignKey(() => Role)
+
+  // async defaultRole (){
+  //     return await RoleRepository.findIdForBuyerRole();
+  // }
+
+  @Column({
+      type: DataType.STRING,
+      // defaultValue: async () => {
+      //     await RoleRepository.findIdForBuyerRole();
+      // },
+  })id_role: string;
+
+  @BelongsTo(() => Role)
+  role: Role;
+
+    async passwordCompare(pwd: string) {
+        return bcrypt.compareSync(pwd, this.password);
+    }
 }
 
-export interface IUser{
-  email: string;
-  password: string;
-}
+//TODO потом подумать куда лучше добавить
+// Role.bulkCreate([
+//     {role:'banned'},
+//     {role:'buyer'},
+//     {role:'develop_project'},
+//     {role:'admin'},
+//     {role:'super_admin'},
+// ], {validate: true}).catch((err) => console.log(err));

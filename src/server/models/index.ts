@@ -1,18 +1,19 @@
-import { Sequelize, } from 'sequelize-typescript';
-import config from '../config/config';
+import {Role} from "./users/Roles";
 import { User, } from './users/User';
+import config from '../config/config';
 import { Session, } from './users/Session';
+import { Sequelize, } from 'sequelize-typescript';
 
 const sequelize = new Sequelize(config.dbLink, {
     dialect: 'postgres',
-    models: [User, Session],
-    repositoryMode: true,
+    models: [User, Session,Role],
 });
+
 sequelize.sync();
 sequelize.authenticate()
     .then(() => {
     console.log('Sequelize has established postgre connection successfully.');
-})
+    })
     .catch(err => {
         console.log('Sequelize was unable to connect to the database:', err);
     });

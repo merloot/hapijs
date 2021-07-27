@@ -1,10 +1,9 @@
-import { v4 as uuidv4, } from 'uuid';
+import {object} from "joi";
 import { Boom, } from '@hapi/boom';
+import { v4 as uuidv4, } from 'uuid';
 import * as FileType from 'file-type';
-import * as speakeasy from 'speakeasy';
 import config from '../config/config';
-import sequelize from "../models";
-import {UniqueConstraintError} from 'sequelize'
+import * as speakeasy from 'speakeasy';
 
 interface IFileWithExt {
   data: Buffer;
@@ -21,6 +20,10 @@ export function getRealIp(request): string {
     : request.info.remoteAddress;
 }
 
+export function getUserAgent(request):string{
+    return request.headers['user-agent']
+}
+
 export function output(res?: object | null): object {
   return {
     ok: true,
@@ -28,6 +31,18 @@ export function output(res?: object | null): object {
   };
 }
 
+export function outputPagination(title: string, item){
+    return {
+        ok: true,
+        result: {
+            [title]: item,
+        },
+    };
+}
+
+export function errors(code: number, msg:string, data?: object) {
+    return { code, msg, data }
+}
 
 
 export function error(code: number, msg: string, data: object): Boom {
@@ -54,7 +69,6 @@ export function responseHandler(r, h) {
     // isServer indicates status code >= 500
     //  if error, pass it through server.log
     if (response && response.isBoom && response.isServer) {
-      console.log(response)
         const error = response.error || response.message;
         console.log([ 'error' ], error);
     }
@@ -62,7 +76,7 @@ export function responseHandler(r, h) {
 }
 
 export async function handleValidationError(r, h, err) {
-  return error(
+  return await error(
     400000,
     'Validation error',
       err.details.map((e) => ({ field: e.context.key, reason: e.type.replace('any.', ''), }))

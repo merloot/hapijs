@@ -14,7 +14,7 @@ import { handleValidationError, responseHandler, } from './utils';
 import { tokenValidate,} from './utils/auth';
 import SwaggerOptions from './config/swagger';
 import { pinoConfig, } from './config/pino';
-
+import sequelize from "./models";
 
 const HapiSwagger = require('hapi-swagger');
 const Package = require('../../package.json');
@@ -22,74 +22,76 @@ const Package = require('../../package.json');
 SwaggerOptions.info.version = Package.version;
 
 const init = async () => {
-  const server = await new Hapi.Server({
-    port: config.server.port,
-    host: config.server.host,
-    query: {
-      parser: (query) => Qs.parse(query),
-    },
-    routes: {
-      validate: {
-        options: {
-          // Handle all validation errors
-          abortEarly: false,
+    const server = await new Hapi.Server({
+        port: config.server.port,
+        host: config.server.host,
+        query: {
+            parser: (query) => Qs.parse(query),
         },
-        failAction: handleValidationError,
-      },
-      response: {
-        failAction: 'log',
-      },
-    },
-  });
-  server.realm.modifiers.route.prefix = '/api';
-  // Регистрируем расширения
-  await server.register([
-    Basic,
-    Nes,
-    Inert,
-    Vision,
-    HapiBearer,
-    { plugin: Pino, options: pinoConfig(true), },
-    { plugin: HapiSwagger, options: SwaggerOptions, }
-  ]);
+        routes: {
+            validate: {
+                options: {
+                    // Handle all validation errors
+                    abortEarly: false,
+                },
+                failAction: handleValidationError,
+            },
+            response: {
+                failAction: 'log',
+            },
+        },
+    });
+    sequelize;
 
-  // sequelize;
-  // JWT Auth
-  server.auth.strategy('jwt-access', 'bearer-access-token', {
-    validate: tokenValidate('access'),
-  });
-  server.auth.strategy('jwt-refresh', 'bearer-access-token', {
-    validate: tokenValidate('refresh'),
-  });
-  server.auth.default('jwt-access');
+    server.realm.modifiers.route.prefix = '/api';
+    // Регистрируем расширения
+    await server.register([
+        Basic,
+        Nes,
+        Inert,
+        Vision,
+        HapiBearer,
+        { plugin: Pino, options: pinoConfig(true), },
+        { plugin: HapiSwagger, options: SwaggerOptions, }
+    ]);
 
-  // Загружаем маршруты
-  server.route(routes);
-  // Error handler
-  server.ext('onPreResponse', responseHandler);
-  await server.register({
-    plugin: HapiPulse,
-    options: {
-      timeout: 15000,
-      signals: ['SIGINT'],
-    },
-  });
-  // Enable CORS (Do it last required!)
-  await server.register({
-    plugin: HapiCors,
-    options: config.cors,
-  });
-  // Запускаем сервер
-  try {
-    await server.start();
+    // sequelize;
+    // JWT Auth
+    server.auth.strategy('jwt-access', 'bearer-access-token', {
+        validate: tokenValidate('access'),
+    });
+    server.auth.strategy('jwt-refresh', 'bearer-access-token', {
+        validate: tokenValidate('refresh'),
+    });
+    server.auth.default('jwt-access');
 
-      server.log('info', `Server running at: ${server.info.uri}`);
-  }
-  catch (err) {
-    server.log('error', JSON.stringify(err));
-  }
+    // Загружаем маршруты
+    server.route(routes);
+    // Error handler
+    server.ext('onPreResponse', responseHandler);
+    await server.register({
+        plugin: HapiPulse,
+        options: {
+            timeout: 15000,
+            signals: ['SIGINT'],
+        },
+    });
+    // Enable CORS (Do it last required!)
+    await server.register({
+        plugin: HapiCors,
+        options: config.cors,
+    });
+    // Запускаем сервер
+    try {
+        await server.start();
 
-  return server;
+        server.log('info', `Server running at: ${server.info.uri}`);
+    }
+    catch (err) {
+        server.log('error', JSON.stringify(err));
+    }
+
+    return server;
 };
 
 export { init, };
